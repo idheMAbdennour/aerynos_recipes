@@ -1,0 +1,17 @@
+# pkg/playdate-mirror-udev.yaml
+name: playdate-mirror-udev
+description: |
+    Reload udev rules after installing the Playdate Mirror USB access rule
+handlers:
+    udev-reload-rules:
+        run: /usr/bin/udevadm
+        args: ["control", "--reload-rules"]
+    udev-trigger:
+        run: /usr/bin/udevadm
+        args: ["trigger"]
+paths:
+    "/usr/lib/udev/rules.d/50-playdate-mirror.rules":
+        handlers:
+            - udev-reload-rules
+            - udev-trigger
+        type: file

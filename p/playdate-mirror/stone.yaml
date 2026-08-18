@@ -1,0 +1,54 @@
+# SPDX-FileCopyrightText: 2026 AerynOS Developers
+# SPDX-License-Identifier: MPL-2.0
+
+name        : playdate-mirror
+version     : 1.4.0
+release     : 1
+homepage    : https://play.date/mirror
+upstreams   :
+    - https://download-cdn.panic.com/mirror/Linux/Mirror-1.4.0.x86_64.deb :
+        hash : 092c0c9456abc54275fcc1973247c6588642981372fbe63deed66f526d284b6e
+        unpack : false
+        rename : mirror.deb
+summary     : Screen viewer and controller for the Playdate console
+description : |
+    Mirror is a small application allowing to cast the display and take control of the Playdate console made by Panic, through a usb connection. It serves as an accessibility software by enabling users to use a bigger screen than the 2.7-inch low-res LCD screen of the console and use a custom controler system. It also enable native screen recording and broadcasting over the internet with the help of a system-wide screen capture software.
+license     : Distributable
+builddeps   :
+    - binary(bsdtar-static)
+    - binary(ln)
+    - binary(patchelf)
+rundeps :
+    - libunwind-nongnu
+setup       : |
+    # Extract mirror filesystem from .deb archive
+    ar xf %(sourcedir)/mirror.deb
+    bsdtar-static xf data.tar.*
+
+    # Patch mismatched soname requirements from debian to aerynos naming conventions
+    patchelf --replace-needed libunwind.so.8 libunwind-nongnu.so.8 usr/bin/mirror
+install     : |
+    %install_bin usr/bin/mirror
+
+    %install_dir %(installroot)/usr/libexec/mirror
+    %install_exe usr/libexec/mirror/crashpad_handler %(installroot)/usr/libexec/mirror/crashpad_handler
+
+    %install_dir %(installroot)%(datadir)/applications
+    %install_file usr/share/applications/date.play.mirror.desktop %(installroot)%(datadir)/applications/date.play.mirror.desktop
+
+    %install_dir %(installroot)%(datadir)/icons/hicolor/scalable/apps
+    %install_file usr/share/icons/hicolor/scalable/apps/date.play.mirror.svg %(installroot)%(datadir)/icons/hicolor/scalable/apps/date.play.mirror.svg
+
+    %install_dir %(installroot)%(datadir)/doc/mirror
+    %install_file usr/share/doc/mirror/LICENSE.md %(installroot)%(datadir)/doc/mirror/LICENSE.md
+    %install_file usr/share/doc/mirror/README.md %(installroot)%(datadir)/doc/mirror/README.md
+
+    %install_dir %(installroot)%(datadir)/mirror
+    %install_file usr/share/mirror/gamecontrollerdb.txt %(installroot)%(datadir)/mirror/gamecontrollerdb.txt
+
+    %install_dir %(installroot)%(udevrulesdir)
+    %install_file etc/udev/rules.d/50-playdate-mirror.rules %(installroot)%(udevrulesdir)/50-playdate-mirror.rules
+
+    # Install trigger needed to reload udev rule to enable usb communication with the device
+    %install_dir %(installroot)/usr/share/moss/triggers/sys.d
+    %install_file %(pkgdir)/playdate-mirror-udev.yaml %(installroot)/usr/share/moss/triggers/sys.d/playdate-mirror-udev.yaml
